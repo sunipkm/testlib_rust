@@ -1,0 +1,12 @@
+[package]
+name = "testlib_rust"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cc = {version = "1.0.79", features = ["parallel"]}
+enum_primitive = "0.1.1"
+libc = "0.2.144"
+pkg-config = "0.3.27"
