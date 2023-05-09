@@ -14,8 +14,8 @@ pub enum TestLibPattern {
 }
 
 #[derive(Debug)]
-pub struct TestLibInfo <'a> {
-    pub name: &'a str,
+pub struct TestLibInfo {
+    pub name: String,
     pub cameraId: i32,
     pub maxHeight: i32,
     pub maxWidth: i32,
@@ -24,35 +24,32 @@ pub struct TestLibInfo <'a> {
     pub bayerPattern: Option<TestLibPattern>
 }
 
-impl <'a> TestLibInfo <'a> {
-    pub fn getInfo() -> Option<TestLibInfo<'a>> {
-        unsafe {
-            let mut info_prv: _TESTLIB_INFO = mem::zeroed(); 
-            println!("Calling C function...");
-            let result = testlib_getinfo(&mut info_prv);
-            println!("In Rust: Result = {result}");
-            match result {
-                0 => {
-                    let nstr = CStr::from_ptr(info_prv.Name.as_ptr()).to_str().unwrap_or("");
-                    
-                    let info: TestLibInfo = TestLibInfo {
-                        name: nstr,
-                        cameraId: info_prv.CameraID,
-                        maxHeight: info_prv.MaxHeight as i32,
-                        maxWidth: info_prv.MaxWidth as i32,
-                        isColorCam: info_prv.IsColorCam != 0,
-                        bayerPattern: match info_prv.BayerPattern {
-                            _TESTLIB_PATTERN_PATTERN_AB => Some(TestLibPattern::pattern_ab),
-                            _TESTLIB_PATTERN_PATTERN_XY => Some(TestLibPattern::pattern_xy),
-                            _TESTLIB_PATTERN_PATTERN_TP => Some(TestLibPattern::pattern_tp),
-                            _TESTLIB_PATTERN_PATTERN_NONE => None,
-                            _ => None
-                        }
-                    };
-                    Some(info)
-                },
-                _ => None
-            }
+impl TestLibInfo {
+    pub fn getInfo() -> Option<TestLibInfo> {
+        let mut info_prv: _TESTLIB_INFO = unsafe {mem::zeroed()};
+        let result = unsafe {testlib_getinfo(&mut info_prv)};
+        match result {
+            0 => {
+                let nstr = unsafe {CStr::from_ptr(info_prv.Name.as_ptr()).to_str().unwrap_or("")};
+                let nstr = String::from(nstr);
+                
+                let info: TestLibInfo = TestLibInfo {
+                    name: nstr,
+                    cameraId: info_prv.CameraID,
+                    maxHeight: info_prv.MaxHeight as i32,
+                    maxWidth: info_prv.MaxWidth as i32,
+                    isColorCam: info_prv.IsColorCam != 0,
+                    bayerPattern: match info_prv.BayerPattern {
+                        _TESTLIB_PATTERN_PATTERN_AB => Some(TestLibPattern::pattern_ab),
+                        _TESTLIB_PATTERN_PATTERN_XY => Some(TestLibPattern::pattern_xy),
+                        _TESTLIB_PATTERN_PATTERN_TP => Some(TestLibPattern::pattern_tp),
+                        _TESTLIB_PATTERN_PATTERN_NONE => None,
+                        _ => None
+                    }
+                };
+                Some(info)
+            },
+            _ => None
         }
     }
 }
@@ -68,7 +65,10 @@ mod tests {
         println!("{:?}", var);
         assert!(match var {
             None => false,
-            _ => true
+            Some(x) => {
+                println!("{:?}", x.name.as_bytes());
+                true
+            }
         });
     }
 }
